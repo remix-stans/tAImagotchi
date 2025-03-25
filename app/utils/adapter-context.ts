@@ -1,12 +1,3 @@
-import {
-	type Session,
-	type SessionStorage,
-	unstable_createContext,
-} from "react-router";
+import { type AppLoadContext, unstable_createContext } from "react-router";
 
-export const adapterContext = unstable_createContext<{
-	cloudflare: {
-		env: CloudflareEnvironment;
-		ctx: ExecutionContext;
-	};
-}>();
+export const adapterContext = unstable_createContext<AppLoadContext>();

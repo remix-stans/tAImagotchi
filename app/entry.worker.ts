@@ -8,11 +8,13 @@ import { adapterContext } from "./utils/adapter-context";
 declare global {
 	interface CloudflareEnvironment extends Env {}
 }
+
 declare module "react-router" {
 	export interface AppLoadContext {
 		cloudflare: {
 			env: CloudflareEnvironment;
 			ctx: ExecutionContext;
+			cf: IncomingRequestCfProperties;
 		};
 	}
 }
@@ -43,11 +45,12 @@ const handler = createRequestHandler(build);
 
 export default {
 	async fetch(request: Request, env: Env, ctx: ExecutionContext) {
+		request.cf;
 		const context = new Map([
 			[
 				adapterContext,
 				{
-					cloudflare: { env, ctx },
+					cloudflare: { env, ctx, cf: request.cf },
 				},
 			],
 		]);

@@ -10,7 +10,8 @@
 		"typecheck": "pnpm rr:typegen && pnpm cf:typegen && tsc",
 		"rr:typegen": "react-router typegen",
 		"rr:routes": "react-router routes",
-		"cf:typegen": "wrangler types"
+		"cf:typegen": "wrangler types",
+		"cf:dev": "wrangler dev"
 	},
 	"dependencies": {
 		"@react-router/cloudflare": "^7.4.0",
