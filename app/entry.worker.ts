@@ -1,9 +1,18 @@
 import { DurableObject } from "cloudflare:workers";
-import { createRequestHandler } from "react-router";
+import { type ServerBuild, createRequestHandler } from "react-router";
 
 // @ts-expect-error - no types
 import * as build from "virtual:react-router/server-build";
-import { adapterContext } from "./utils/adapter-context";
+import { type Context, Hono } from "hono";
+import { agentsMiddleware } from "hono-agents";
+import { createMiddleware } from "hono/factory";
+import { adapterContext } from "./lib/adapter-context";
+import { Tamagochi } from "./taimogochi";
+
+interface ReactRouterMiddlewareOptions {
+	build: ServerBuild;
+	mode?: "development" | "production";
+}
 
 declare global {
 	interface CloudflareEnvironment extends Env {}
@@ -19,42 +28,34 @@ declare module "react-router" {
 	}
 }
 
-export class Counter extends DurableObject {
-	async getCounterValue() {
-		const value = ((await this.ctx.storage.get("value")) as number) || 0;
-		return value;
-	}
+const app = new Hono<{ Bindings: Env }>();
 
-	async increment(amount = 1) {
-		let value = ((await this.ctx.storage.get("value")) as number) || 0;
-		value += amount;
+export { Tamagochi };
 
-		await this.ctx.storage.put("value", value);
-		return value;
-	}
+const reactRouter = ({ build, mode }: ReactRouterMiddlewareOptions) => {
+	return createMiddleware(async (c) => {
+		const requestHandler = createRequestHandler(build, mode);
 
-	async decrement(amount = 1) {
-		let value = ((await this.ctx.storage.get("value")) as number) || 0;
-		value -= amount;
-		await this.ctx.storage.put("value", value);
-		return value;
-	}
-}
-
-const handler = createRequestHandler(build);
-
-export default {
-	async fetch(request: Request, env: Env, ctx: ExecutionContext) {
-		request.cf;
 		const context = new Map([
 			[
 				adapterContext,
 				{
-					cloudflare: { env, ctx, cf: request.cf },
+					cloudflare: { env: c.env, ctx: c.executionCtx, cf: c.req.raw.cf },
 				},
 			],
 		]);
-
-		return await handler(request, context);
-	},
+		return await requestHandler(c.req.raw, context);
+	});
 };
+
+app.use("/agents/*", agentsMiddleware());
+
+app.use(
+	"/*",
+	reactRouter({
+		build,
+		mode: process.env.ENV as "development" | "production",
+	}),
+);
+
+export default app;

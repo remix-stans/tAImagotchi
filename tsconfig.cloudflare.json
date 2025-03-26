@@ -11,14 +11,17 @@
 	"compilerOptions": {
 		"composite": true,
 		"jsx": "react-jsx",
+		"target": "ES2021",
 		"types": [
 			"@total-typescript/ts-reset",
 			"@cloudflare/workers-types",
 			"vite/client"
 		],
+		"strict": true,
+		"noImplicitOverride": false,
 		"rootDirs": [".", "./.react-router/types"],
 		"paths": {
-			"~/*": ["./app/*"]
+			"@/*": ["./app/*"]
 		}
 	}
 }

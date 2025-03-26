@@ -10,15 +10,15 @@
 	"durable_objects": {
 		"bindings": [
 			{
-				"name": "counter",
-				"class_name": "Counter"
+				"name": "Tamagochi",
+				"class_name": "Tamagochi"
 			}
 		]
 	},
 	"migrations": [
 		{
 			"tag": "v1",
-			"new_classes": ["Counter"]
+			"new_sqlite_classes": ["Tamagochi"]
 		}
 	],
 	"workers_dev": true,

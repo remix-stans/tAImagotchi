@@ -6,7 +6,7 @@
 		"dev": "vite dev",
 		"build": "vite build",
 		"start": "vite preview",
-		"deploy": "wrangler deploy",
+		"deploy": "pnpm run build && wrangler deploy",
 		"typecheck": "pnpm rr:typegen && pnpm cf:typegen && tsc",
 		"rr:typegen": "react-router typegen",
 		"rr:routes": "react-router routes",
@@ -14,12 +14,27 @@
 		"cf:dev": "wrangler dev"
 	},
 	"dependencies": {
+		"@ai-sdk/deepseek": "^0.2.1",
+		"@ai-sdk/google": "^1.2.3",
+		"@ai-sdk/react": "^1.2.2",
+		"@radix-ui/react-slot": "^1.1.2",
 		"@react-router/cloudflare": "^7.4.0",
 		"@react-router/serve": "^7.4.0",
+		"agents": "^0.0.43",
+		"ai": "^4.2.5",
+		"class-variance-authority": "^0.7.1",
+		"clsx": "^2.1.1",
+		"dayjs": "^1.11.13",
+		"hono": "^4.7.5",
+		"hono-agents": "^0.0.33",
 		"isbot": "^5.1.17",
+		"lucide-react": "^0.484.0",
 		"react": "^19.0.0",
 		"react-dom": "^19.0.0",
-		"react-router": "^7.4.0"
+		"react-router": "^7.4.0",
+		"tailwind-merge": "^3.0.2",
+		"usehooks-ts": "^3.1.1",
+		"zod": "^3.24.2"
 	},
 	"devDependencies": {
 		"@cloudflare/vite-plugin": "^0.1.14",
@@ -33,9 +48,9 @@
 		"@types/react-dom": "^19.0.1",
 		"react-router-devtools": "^1.1.0",
 		"tailwindcss": "^4.0.0",
-		"typescript": "^5.7.2",
+		"typescript": "^5.8.2",
 		"vite": "^6.2.2",
 		"vite-tsconfig-paths": "^5.1.4",
-		"wrangler": "^4.3.0"
+		"wrangler": "^4.4.0"
 	}
 }
