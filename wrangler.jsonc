@@ -21,6 +21,13 @@
 			"new_sqlite_classes": ["Tamagochi"]
 		}
 	],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "db",
+      "database_id": "abcda511-b372-426a-af23-2a6f52b19fbc"
+    }
+  ],
 	"workers_dev": true,
 	"dev": { "port": 3000 },
 	"placement": { "mode": "off" },
