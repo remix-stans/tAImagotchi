@@ -1,11 +1,7 @@
 import { AsyncLocalStorage } from "node:async_hooks";
-import { createDeepSeek } from "@ai-sdk/deepseek";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
-import {
-	type Connection,
-	unstable_callable as callable,
-	routeAgentRequest,
-} from "agents";
+import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+import { type Connection, unstable_callable as callable } from "agents";
 import { AIChatAgent } from "agents/ai-chat-agent";
 import {
 	type StreamTextOnFinishCallback,
@@ -31,11 +27,9 @@ export class Tamagochi extends AIChatAgent<Env, State> {
 		apiKey: this.env.GEMINI_API_KEY,
 	});
 
-	deepseek = this.env.DEEPSEEK_API_KEY
-		? createDeepSeek({
-				apiKey: this.env.DEEPSEEK_API_KEY,
-			})
-		: undefined;
+	openrouter = createOpenRouter({
+		apiKey: this.env.OPENROUTER_API_KEY,
+	});
 
 	initialState: State = INITIAL_STATE;
 
@@ -332,50 +326,32 @@ export class Tamagochi extends AIChatAgent<Env, State> {
 	}
 
 	async checkRelationship() {
-		if (this.deepseek) {
-			const { text: conversationSummary } = await generateText({
-				model: this.deepseek("deepseek-reasoner"),
-				system:
-					"You are an AI assistant that summarizes a conversation between a user and their virtual pet",
-				messages: this.messages,
-			});
+		const { text: conversationSummary } = await generateText({
+			model: this.openrouter("qwen/qwq-32b:free"),
+			system:
+				"You are an AI assistant that summarizes a conversation between a user and their virtual pet",
+			messages: this.messages,
+		});
 
-			const {
-				object: { relationship },
-			} = await generateObject({
-				model: this.gemini("gemini-2.0-flash", {
-					structuredOutputs: true,
-				}),
-				schema: z.object({
-					relationship: z.number().int().min(1).max(5),
-				}),
-				system:
-					"You are an AI assistant that takes conversation summaries and assesses the relationship level between the two parties. You judge the relationship on a scale of 1 to 5 where 1 is a poor relationship and 5 is a relationship between best friends.",
-				prompt: `Assess the relationship level between a user and their virtual pet with the following conversation summary: ${conversationSummary}`,
-			});
+		console.log("conversationSummary", conversationSummary);
 
-			this.setState({
-				...this.state,
-				relationship,
-			});
-		}
+		const {
+			object: { relationship },
+		} = await generateObject({
+			model: this.gemini("gemini-2.0-flash", {
+				structuredOutputs: true,
+			}),
+			schema: z.object({
+				relationship: z.number().int().min(1).max(5),
+			}),
+			system:
+				"You are an AI assistant that takes conversation summaries and assesses the relationship level between the two parties. You judge the relationship on a scale of 1 to 5 where 1 is a poor relationship and 5 is a relationship between best friends.",
+			prompt: `Assess the relationship level between a user and their virtual pet with the following conversation summary: ${conversationSummary}`,
+		});
+
+		this.setState({
+			...this.state,
+			relationship,
+		});
 	}
 }
-
-export default {
-	async fetch(request: Request, env: Env, ctx: ExecutionContext) {
-		if (!env.GEMINI_API_KEY) {
-			console.error(
-				"GEMINI_API_KEY is not set, don't forget to set it locally in .dev.vars, and use `wrangler secret bulk .dev.vars` to upload it to production",
-			);
-			return new Response("GEMINI_API_KEY is not set", {
-				status: 500,
-			});
-		}
-		return (
-			// Route the request to our agent or return 404 if not found
-			(await routeAgentRequest(request, env)) ||
-			new Response("Not found", { status: 404 })
-		);
-	},
-} satisfies ExportedHandler<Env>;

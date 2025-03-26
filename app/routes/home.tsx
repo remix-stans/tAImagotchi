@@ -43,6 +43,8 @@ export function meta({ data }: Route.MetaArgs) {
 export default function Home({ loaderData }: Route.ComponentProps) {
 	return (
 		<div>
+			<pre>{JSON.stringify(loaderData, null, 2)}</pre>
+
 			<UI />
 		</div>
 	);

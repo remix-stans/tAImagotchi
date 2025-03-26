@@ -14,9 +14,9 @@
 		"cf:dev": "wrangler dev"
 	},
 	"dependencies": {
-		"@ai-sdk/deepseek": "^0.2.1",
 		"@ai-sdk/google": "^1.2.3",
 		"@ai-sdk/react": "^1.2.2",
+		"@openrouter/ai-sdk-provider": "^0.4.3",
 		"@radix-ui/react-slot": "^1.1.2",
 		"@react-router/cloudflare": "^7.4.0",
 		"@react-router/serve": "^7.4.0",
