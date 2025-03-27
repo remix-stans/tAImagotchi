@@ -7,7 +7,14 @@
   },
   "files": {
     "ignoreUnknown": false,
-    "ignore": ["node_modules", "dist", "./worker-configuration.d.ts"]
+    "ignore": [
+      "node_modules",
+      "build",
+      "dist",
+      ".wrangler",
+      ".react-router",
+      "./worker-configuration.d.ts"
+    ]
   },
   "formatter": {
     "indentStyle": "space"
