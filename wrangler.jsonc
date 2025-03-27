@@ -1,29 +1,36 @@
 {
-	"$schema": "https://unpkg.com/wrangler@latest/config-schema.json",
-	"name": "react-router-cloudflare",
-	"main": "./app/entry.worker.ts",
-	"compatibility_date": "2025-02-20",
-	"compatibility_flags": [
-		"nodejs_compat",
-		"nodejs_compat_populate_process_env"
-	],
-	"durable_objects": {
-		"bindings": [
-			{
-				"name": "Tamagochi",
-				"class_name": "Tamagochi"
-			}
-		]
-	},
-	"migrations": [
-		{
-			"tag": "v1",
-			"new_sqlite_classes": ["Tamagochi"]
-		}
-	],
-	"workers_dev": true,
-	"dev": { "port": 3000 },
-	"placement": { "mode": "off" },
-	"observability": { "enabled": true },
-	"assets": { "directory": "./build/client" }
+  "$schema": "https://unpkg.com/wrangler@latest/config-schema.json",
+  "name": "react-router-cloudflare",
+  "main": "./app/entry.worker.ts",
+  "compatibility_date": "2025-02-20",
+  "compatibility_flags": [
+    "nodejs_compat",
+    "nodejs_compat_populate_process_env"
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "Tamagochi",
+        "class_name": "Tamagochi"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["Tamagochi"]
+    }
+  ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "db",
+      "database_id": "abcda511-b372-426a-af23-2a6f52b19fbc"
+    }
+  ],
+  "workers_dev": true,
+  "dev": { "port": 3000 },
+  "placement": { "mode": "off" },
+  "observability": { "enabled": true },
+  "assets": { "directory": "./build/client" }
 }
