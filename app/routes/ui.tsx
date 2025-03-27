@@ -30,277 +30,277 @@ dayjs.extend(DayJSUtc);
 dayjs.extend(tz);
 
 export default function Chat() {
-	const [state, setState] = useState<State>(INITIAL_STATE);
+  const [state, setState] = useState<State>(INITIAL_STATE);
 
-	const { containerRef, messagesRef, scrollToBottom } = useScrollAnchor();
+  const { containerRef, messagesRef, scrollToBottom } = useScrollAnchor();
 
-	useEffect(() => {
-		if (state.initialized) {
-			scrollToBottom();
-		}
-	}, [scrollToBottom, state.initialized]);
+  useEffect(() => {
+    if (state.initialized) {
+      scrollToBottom();
+    }
+  }, [scrollToBottom, state.initialized]);
 
-	const agent = useAgent({
-		agent: "tamagochi",
-		prefix: "agents",
-		host: "http://localhost:3000",
-		onStateUpdate(state, source) {
-			setState(state as State);
-		},
-	});
+  const agent = useAgent({
+    agent: "tamagochi",
+    prefix: "agents",
+    host: "http://localhost:3000",
+    onStateUpdate(state, source) {
+      setState(state as State);
+    },
+  });
 
-	const {
-		messages: agentMessages,
-		input: agentInput,
-		handleInputChange: handleAgentInputChange,
-		handleSubmit: handleAgentSubmit,
-		clearHistory,
-	} = useAgentChat({
-		agent,
-		maxSteps: 5,
-	});
+  const {
+    messages: agentMessages,
+    input: agentInput,
+    handleInputChange: handleAgentInputChange,
+    handleSubmit: handleAgentSubmit,
+    clearHistory,
+  } = useAgentChat({
+    agent,
+    maxSteps: 5,
+  });
 
-	// Scroll to bottom when messages change
-	useEffect(() => {
-		agentMessages.length > 0 && scrollToBottom();
-	}, [agentMessages, scrollToBottom]);
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    agentMessages.length > 0 && scrollToBottom();
+  }, [agentMessages, scrollToBottom]);
 
-	// Calculate pet age in days
-	const calculateAge = () => {
-		if (!state.createdAt) return 0;
-		return getAge(state.createdAt);
-	};
+  // Calculate pet age in days
+  const calculateAge = () => {
+    if (!state.createdAt) return 0;
+    return getAge(state.createdAt);
+  };
 
-	// Get status text based on stat value
-	const getStatusText = (value: number) => {
-		if (value > 70) return "Good";
-		if (value > 40) return "Okay";
-		return "Poor";
-	};
+  // Get status text based on stat value
+  const getStatusText = (value: number) => {
+    if (value > 70) return "Good";
+    if (value > 40) return "Okay";
+    return "Poor";
+  };
 
-	// Get color based on stat value
-	const getStatusColor = (value: number) => {
-		if (value > 70) return "text-green-500";
-		if (value > 40) return "text-yellow-500";
-		return "text-red-500";
-	};
+  // Get color based on stat value
+  const getStatusColor = (value: number) => {
+    if (value > 70) return "text-green-500";
+    if (value > 40) return "text-yellow-500";
+    return "text-red-500";
+  };
 
-	// Get progress color based on stat value
-	const getProgressColor = (value: number) => {
-		if (value > 70) return "bg-green-500";
-		if (value > 40) return "bg-yellow-500";
-		return "bg-red-500";
-	};
+  // Get progress color based on stat value
+  const getProgressColor = (value: number) => {
+    if (value > 70) return "bg-green-500";
+    if (value > 40) return "bg-yellow-500";
+    return "bg-red-500";
+  };
 
-	// const submitChatMessage = (e: React.FormEvent<HTMLFormElement>) => {
-	//   e.preventDefault();
-	//   const age = getAge(state.createdAt);
-	//   if (age === 0) {
-	//     agent.call("submitChatMessageWhileEgg", [agentInput]);
-	//   } else {
-	//     console.log("here");
-	//     handleAgentSubmit(e);
-	//   }
-	// };
+  // const submitChatMessage = (e: React.FormEvent<HTMLFormElement>) => {
+  //   e.preventDefault();
+  //   const age = getAge(state.createdAt);
+  //   if (age === 0) {
+  //     agent.call("submitChatMessageWhileEgg", [agentInput]);
+  //   } else {
+  //     console.log("here");
+  //     handleAgentSubmit(e);
+  //   }
+  // };
 
-	return (
-		<div
-			data-sleeping={state.isSleeping}
-			className="relative h-[100vh] w-full bg-center bg-cover bg-no-repeat after:absolute after:inset-0 after:backdrop-blur-xs data-[sleeping=false]:[background-image:url('/images/morning.webp')] data-[sleeping=true]:[background-image:url('/images/night.webp')]"
-		>
-			{!state.initialized ? (
-				<div className="relative z-10 flex h-full w-full items-center justify-center">
-					<form
-						onSubmit={(e) => {
-							e.preventDefault();
-							const formData = new FormData(e.target as HTMLFormElement);
-							const name = formData.get("name") as string;
-							const personality = formData.get("personality") as string;
-							if (!name || !personality) return;
-							agent.call("init", [
-								personality,
-								name,
-								Intl.DateTimeFormat().resolvedOptions().timeZone,
-							]);
-						}}
-						className=" mx-auto w-[40rem] max-w-[calc(100vw-3rem)]"
-					>
-						<div className="flex items-center justify-between rounded-t-3xl border-border border-b bg-background px-4 py-3">
-							<h2 className="font-semibold text-base">
-								Create Your Tamagotchi
-							</h2>
-						</div>
+  return (
+    <div
+      data-sleeping={state.isSleeping}
+      className="relative h-[100vh] w-full bg-center bg-cover bg-no-repeat after:absolute after:inset-0 after:backdrop-blur-xs data-[sleeping=false]:[background-image:url('/images/morning.webp')] data-[sleeping=true]:[background-image:url('/images/night.webp')]"
+    >
+      {!state.initialized ? (
+        <div className="relative z-10 flex h-full w-full items-center justify-center">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              const formData = new FormData(e.target as HTMLFormElement);
+              const name = formData.get("name") as string;
+              const personality = formData.get("personality") as string;
+              if (!name || !personality) return;
+              agent.call("init", [
+                personality,
+                name,
+                Intl.DateTimeFormat().resolvedOptions().timeZone,
+              ]);
+            }}
+            className=" mx-auto w-[40rem] max-w-[calc(100vw-3rem)]"
+          >
+            <div className="flex items-center justify-between rounded-t-3xl border-border border-b bg-background px-4 py-3">
+              <h2 className="font-semibold text-base">
+                Create Your Tamagotchi
+              </h2>
+            </div>
 
-						<div className="flex flex-1 flex-col items-center justify-center gap-6 rounded-b-3xl border-border bg-background p-8">
-							<div className="w-full max-w-xs space-y-4">
-								<div className="space-y-2">
-									<label htmlFor="name" className="block font-medium text-sm">
-										Name your pet
-									</label>
-									<Input
-										id="name"
-										placeholder="e.g., Pixelpal"
-										name="name"
-										required
-									/>
-								</div>
+            <div className="flex flex-1 flex-col items-center justify-center gap-6 rounded-b-3xl border-border bg-background p-8">
+              <div className="w-full max-w-xs space-y-4">
+                <div className="space-y-2">
+                  <label htmlFor="name" className="block font-medium text-sm">
+                    Name your pet
+                  </label>
+                  <Input
+                    id="name"
+                    placeholder="e.g., Pixelpal"
+                    name="name"
+                    required
+                  />
+                </div>
 
-								<div className="space-y-2">
-									<label
-										htmlFor="personality"
-										className="block font-medium text-sm"
-									>
-										Give it a personality
-									</label>
-									<Input
-										id="personality"
-										placeholder="e.g., Playful and energetic"
-										name="personality"
-										required
-									/>
-								</div>
+                <div className="space-y-2">
+                  <label
+                    htmlFor="personality"
+                    className="block font-medium text-sm"
+                  >
+                    Give it a personality
+                  </label>
+                  <Input
+                    id="personality"
+                    placeholder="e.g., Playful and energetic"
+                    name="personality"
+                    required
+                  />
+                </div>
 
-								<Button
-									type="submit"
-									className="mt-4 w-full bg-[#F48120] hover:bg-[#F48120]/80"
-								>
-									Create Pet
-								</Button>
-							</div>
-						</div>
-					</form>
-				</div>
-			) : (
-				<div className="relative z-10 flex h-full min-h-0 grid-cols-12 flex-col md:grid">
-					<div className="col-span-8 flex flex-col border-border px-2">
-						<div className="relative flex flex-1 flex-col items-center justify-center px-4 py-6">
-							<div className="flex justify-between gap-2 px-4 py-6">
-								<div className="h-12 w-12 overflow-hidden rounded-lg">
-									<img
-										src={baseballBat}
-										alt="baseball bat"
-										className="h-full w-full"
-									/>
-								</div>
-								<div className="h-12 w-12 overflow-hidden rounded-lg">
-									<img src={eat} alt="eat" className="h-full w-full" />
-								</div>
-								<div className="h-12 w-12 overflow-hidden rounded-lg">
-									<img src={workout} alt="workout" className="h-full w-full" />
-								</div>
-								<div className="h-12 w-12 overflow-hidden rounded-lg">
-									<img
-										src={lightbulb}
-										alt="lightbulb"
-										className="h-full w-full"
-									/>
-								</div>
-								<div className="h-12 w-12 overflow-hidden rounded-lg">
-									<img src={syringe} alt="syringe" className="h-full w-full" />
-								</div>
-								<div className="h-12 w-12 overflow-hidden rounded-lg">
-									<img src={shower} alt="shower" className="h-full w-full" />
-								</div>
-								<Button
-									className="h-12 w-12 overflow-hidden rounded-lg p-0 transition-transform hover:scale-105"
-									onClick={() => {
-										agent.call("interact", ["cleanPoop"]);
-									}}
-								>
-									<img src={toilet} alt="toilet" className="h-full w-full" />
-								</Button>
-							</div>
-							<div className="grid size-[30rem] grid-cols-7 place-items-end justify-items-center">
-								<img
-									src={egg}
-									alt="egg"
-									className="relative mb-8 ml-8 size-48 [grid-area:1/3/1/span_2]"
-								/>
-								{Array(state.poops)
-									.fill(0)
-									.map((value, index) => (
-										<img
-											key={`poop.${value + index}`}
-											// @ts-ignore It is supported
-											style={{ "grid-area": `1/${index + 1}` }}
-											src={poop}
-											alt="poop"
-											className="relative mb-8 size-12"
-										/>
-									))}
-								<img
-									src={room}
-									alt="room"
-									className="size-[30rem] rounded-lg [grid-area:1/1/1/span_7]"
-								/>
-							</div>
-						</div>
-					</div>
-					<div className="col-span-4 h-full w-full overflow-hidden">
-						<div className="flex h-full flex-col">
-							<div className="flex-1 overflow-auto p-2" ref={containerRef}>
-								<div
-									className="flex min-h-full flex-col gap-2 overflow-visible"
-									ref={messagesRef}
-								>
-									{agentMessages.map((m: Message) => {
-										const isUser = m.role === "user";
+                <Button
+                  type="submit"
+                  className="mt-4 w-full bg-[#F48120] hover:bg-[#F48120]/80"
+                >
+                  Create Pet
+                </Button>
+              </div>
+            </div>
+          </form>
+        </div>
+      ) : (
+        <div className="relative z-10 flex h-full min-h-0 grid-cols-12 flex-col md:grid">
+          <div className="col-span-8 flex flex-col border-border px-2">
+            <div className="relative flex flex-1 flex-col items-center justify-center px-4 py-6">
+              <div className="flex justify-between gap-2 px-4 py-6">
+                <div className="h-12 w-12 overflow-hidden rounded-lg">
+                  <img
+                    src={baseballBat}
+                    alt="baseball bat"
+                    className="h-full w-full"
+                  />
+                </div>
+                <div className="h-12 w-12 overflow-hidden rounded-lg">
+                  <img src={eat} alt="eat" className="h-full w-full" />
+                </div>
+                <div className="h-12 w-12 overflow-hidden rounded-lg">
+                  <img src={workout} alt="workout" className="h-full w-full" />
+                </div>
+                <div className="h-12 w-12 overflow-hidden rounded-lg">
+                  <img
+                    src={lightbulb}
+                    alt="lightbulb"
+                    className="h-full w-full"
+                  />
+                </div>
+                <div className="h-12 w-12 overflow-hidden rounded-lg">
+                  <img src={syringe} alt="syringe" className="h-full w-full" />
+                </div>
+                <div className="h-12 w-12 overflow-hidden rounded-lg">
+                  <img src={shower} alt="shower" className="h-full w-full" />
+                </div>
+                <Button
+                  className="h-12 w-12 overflow-hidden rounded-lg p-0 transition-transform hover:scale-105"
+                  onClick={() => {
+                    agent.call("interact", ["cleanPoop"]);
+                  }}
+                >
+                  <img src={toilet} alt="toilet" className="h-full w-full" />
+                </Button>
+              </div>
+              <div className="grid size-[30rem] grid-cols-7 place-items-end justify-items-center">
+                <img
+                  src={egg}
+                  alt="egg"
+                  className="relative mb-8 ml-8 size-48 [grid-area:1/3/1/span_2]"
+                />
+                {Array(state.poops)
+                  .fill(0)
+                  .map((value, index) => (
+                    <img
+                      key={`poop.${value + index}`}
+                      // @ts-ignore It is supported
+                      style={{ "grid-area": `1/${index + 1}` }}
+                      src={poop}
+                      alt="poop"
+                      className="relative mb-8 size-12"
+                    />
+                  ))}
+                <img
+                  src={room}
+                  alt="room"
+                  className="size-[30rem] rounded-lg [grid-area:1/1/1/span_7]"
+                />
+              </div>
+            </div>
+          </div>
+          <div className="col-span-4 h-full w-full overflow-hidden">
+            <div className="flex h-full flex-col">
+              <div className="flex-1 overflow-auto p-2" ref={containerRef}>
+                <div
+                  className="flex min-h-full flex-col gap-2 overflow-visible"
+                  ref={messagesRef}
+                >
+                  {agentMessages.map((m: Message) => {
+                    const isUser = m.role === "user";
 
-										return (
-											<div key={m.id} className="mb-1">
-												<div
-													className={`max-w-[90%] ${isUser ? "ml-auto" : "mr-auto"} rounded px-2 py-1.5 text-sm ${
-														isUser
-															? "bg-primary"
-															: "bg-gray-100 dark:bg-gray-800"
-													}`}
-												>
-													{m.parts?.map((part, i) => {
-														if (part.type === "text") {
-															return (
-																<div
-																	key={`part-${m.id}-${i}`}
-																	className="whitespace-pre-wrap"
-																>
-																	{part.text}
-																</div>
-															);
-														}
-														return null;
-													})}
-												</div>
-											</div>
-										);
-									})}
-								</div>
-							</div>
-							<form
-								onSubmit={handleAgentSubmit}
-								className="sticky bottom-0 w-full border-muted border-t bg-background px-4 py-3"
-							>
-								<div className="flex space-x-2">
-									<Input
-										value={agentInput}
-										onChange={handleAgentInputChange}
-										placeholder="Talk..."
-										className="h-6 flex-1 px-2 py-0 text-[10px]"
-									/>
-									<Button
-										type="submit"
-										variant="ghost"
-										size="icon"
-										className="h-6 w-6 min-w-0 p-0"
-									>
-										<Send className="h-3 w-3" />
-										<span className="sr-only">Send</span>
-									</Button>
-								</div>
-							</form>
-						</div>
-					</div>
-				</div>
-			)}
-			{/* {!state.initialized ? (
+                    return (
+                      <div key={m.id} className="mb-1">
+                        <div
+                          className={`max-w-[90%] ${isUser ? "ml-auto" : "mr-auto"} rounded px-2 py-1.5 text-sm ${
+                            isUser
+                              ? "bg-primary"
+                              : "bg-gray-100 dark:bg-gray-800"
+                          }`}
+                        >
+                          {m.parts?.map((part, i) => {
+                            if (part.type === "text") {
+                              return (
+                                <div
+                                  key={`part-${m.id}-${i}`}
+                                  className="whitespace-pre-wrap"
+                                >
+                                  {part.text}
+                                </div>
+                              );
+                            }
+                            return null;
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              <form
+                onSubmit={handleAgentSubmit}
+                className="sticky bottom-0 w-full border-muted border-t bg-background px-4 py-3"
+              >
+                <div className="flex space-x-2">
+                  <Input
+                    value={agentInput}
+                    onChange={handleAgentInputChange}
+                    placeholder="Talk..."
+                    className="h-6 flex-1 px-2 py-0 text-[10px]"
+                  />
+                  <Button
+                    type="submit"
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 min-w-0 p-0"
+                  >
+                    <Send className="h-3 w-3" />
+                    <span className="sr-only">Send</span>
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* {!state.initialized ? (
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -744,6 +744,6 @@ export default function Chat() {
           )}
         </div>
       )} */}
-		</div>
-	);
+    </div>
+  );
 }
