@@ -4,15 +4,8 @@ import { useAgent } from "agents/react";
 import dayjs from "dayjs";
 import tz from "dayjs/plugin/timezone";
 import DayJSUtc from "dayjs/plugin/utc";
-
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Moon, Send, Sun } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import { useLoaderData } from "react-router";
-
-import type { State } from "../shared";
-import { INITIAL_STATE, getAge } from "../shared";
+import { Send } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import baseballBat from "@/assets/baseball-bat.webp";
 import eat from "@/assets/eat.webp";
@@ -24,9 +17,11 @@ import shower from "@/assets/shower.webp";
 import syringe from "@/assets/syringe.webp";
 import toilet from "@/assets/toilet.webp";
 import workout from "@/assets/workout.webp";
-
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useScrollAnchor } from "@/lib/hooks/use-scroll-anchor";
 import { useAppLoaderData } from "./app";
+import { type State, INITIAL_STATE } from "../shared";
 
 dayjs.extend(DayJSUtc);
 dayjs.extend(tz);
@@ -58,7 +53,6 @@ export default function Chat() {
     input: agentInput,
     handleInputChange: handleAgentInputChange,
     handleSubmit: handleAgentSubmit,
-    clearHistory,
   } = useAgentChat({
     agent,
     maxSteps: 5,
@@ -68,44 +62,6 @@ export default function Chat() {
   useEffect(() => {
     agentMessages.length > 0 && scrollToBottom();
   }, [agentMessages, scrollToBottom]);
-
-  // Calculate pet age in days
-  const calculateAge = () => {
-    if (!state.createdAt) return 0;
-    return getAge(state.createdAt);
-  };
-
-  // Get status text based on stat value
-  const getStatusText = (value: number) => {
-    if (value > 70) return "Good";
-    if (value > 40) return "Okay";
-    return "Poor";
-  };
-
-  // Get color based on stat value
-  const getStatusColor = (value: number) => {
-    if (value > 70) return "text-green-500";
-    if (value > 40) return "text-yellow-500";
-    return "text-red-500";
-  };
-
-  // Get progress color based on stat value
-  const getProgressColor = (value: number) => {
-    if (value > 70) return "bg-green-500";
-    if (value > 40) return "bg-yellow-500";
-    return "bg-red-500";
-  };
-
-  // const submitChatMessage = (e: React.FormEvent<HTMLFormElement>) => {
-  //   e.preventDefault();
-  //   const age = getAge(state.createdAt);
-  //   if (age === 0) {
-  //     agent.call("submitChatMessageWhileEgg", [agentInput]);
-  //   } else {
-  //     console.log("here");
-  //     handleAgentSubmit(e);
-  //   }
-  // };
 
   return (
     <div

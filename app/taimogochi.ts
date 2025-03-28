@@ -14,7 +14,7 @@ import dayjs from "dayjs";
 import tz from "dayjs/plugin/timezone";
 import DayJSUtc from "dayjs/plugin/utc";
 import { z } from "zod";
-import { type ACTIONS, INITIAL_STATE, type State, getAge } from "./shared";
+import { type ACTIONS, INITIAL_STATE, type State } from "./shared";
 
 dayjs.extend(DayJSUtc);
 dayjs.extend(tz);
@@ -146,12 +146,12 @@ export class Tamagochi extends AIChatAgent<Env, State> {
     return currentLocalHour >= 17 || currentLocalHour <= 6;
   }
 
-  generatePrompt(prompt?: string) {
+  generateSystemPrompt() {
     let agePersonality: string;
 
-    const age = getAge(this.state.createdAt);
-
-    switch (age) {
+    switch (this.state.age) {
+      case 0:
+        return "You are an unhatched egg that can only reply with '...'";
       case 1:
         agePersonality =
           "You are a hatchling and reply with childlike vocabulary, some grammar mistakes, and unpredictable emotions ranging from curiosity to occasional tantrums";
@@ -172,10 +172,6 @@ export class Tamagochi extends AIChatAgent<Env, State> {
         agePersonality =
           "You are an adult and reply with more maturity and emotional stability";
         break;
-    }
-
-    if (age === 0) {
-      return `You are an unhatched egg that can only reply with "..."`;
     }
 
     return `
@@ -226,8 +222,6 @@ export class Tamagochi extends AIChatAgent<Env, State> {
       - Describe what you're doing and how you feel
       - Occasionally have random events occur (getting sick, finding an item, etc.)
       - If you're dead, don't respond to any interactions
-
-      ${prompt ?? ""}
       `;
   }
 
@@ -235,11 +229,15 @@ export class Tamagochi extends AIChatAgent<Env, State> {
     onFinish: StreamTextOnFinishCallback<Record<string, never>>,
   ) {
     return agentContext.run(this, async () => {
+      if (this.state.age === 0) {
+        return new Response("0:\"...\"\n"); // replies with "..."
+      }
+
       const dataStreamResponse = createDataStreamResponse({
         execute: async (dataStream) => {
           const result = streamText({
             model: this.gemini("gemini-2.0-flash"),
-            system: this.generatePrompt(),
+            system: this.generateSystemPrompt(),
             messages: this.messages,
             onError: (error) => {
               console.error("Error while streaming:", error);
@@ -262,13 +260,12 @@ export class Tamagochi extends AIChatAgent<Env, State> {
   }
 
   async adjustStats() {
-    const age = getAge(this.state.createdAt);
+    const age = Math.floor((Date.now() - this.state.createdAt) / (1000 * 60 * 60 * 24));
 
     // if the pet is less than 1 day old, don't adjust stats
     if (age === 0) return;
 
     const hygieneMultiplier = 1 + this.state.poops * 0.2;
-
     this.setState({
       ...this.state,
       satiety: Math.max(this.state.satiety - 10 / 6, 0), // 10 pts every 6 intervals,
@@ -277,15 +274,13 @@ export class Tamagochi extends AIChatAgent<Env, State> {
       health: Math.max(this.state.health - 5 / 24, 0), // 5 pts every 24 intervals
       hygiene: Math.max(this.state.hygiene - (25 * hygieneMultiplier) / 48, 0), // 25 pts every 48 intervals
       isSleeping: this.getIsSleeping(),
-      age: getAge(this.state.createdAt),
+      age,
     });
   }
 
   takePoop() {
-    const age = getAge(this.state.createdAt);
-
     // if the pet is less than 1 day old, dead, or sleeping, then don't poop
-    if (age === 0 || this.state.isSleeping || !this.state.isAlive) return;
+    if (this.state.age === 0 || this.state.isSleeping || !this.state.isAlive) return;
 
     // Don't poop if we aren't that full
     if (this.state.satiety < 50) return;
@@ -297,10 +292,8 @@ export class Tamagochi extends AIChatAgent<Env, State> {
   }
 
   checkHealth() {
-    const age = getAge(this.state.createdAt);
-
     // if the pet is less than 1 day old, it can't get sick
-    if (age === 0) return;
+    if (this.state.age === 0) return;
 
     if (this.state.health === 0) {
       const consecutiveZeroDays = this.state.consecutiveZeroHealthDays + 1;

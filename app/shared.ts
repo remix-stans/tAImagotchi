@@ -56,7 +56,3 @@ export const ACTIONS = {
   LIGHTS_ON: "lightsOn",
   LIGHTS_OFF: "lightsOff",
 } as const;
-
-export const getAge = (createdAt: number) => {
-  return Math.floor((Date.now() - createdAt) / (1000 * 60 * 60 * 24));
-};
