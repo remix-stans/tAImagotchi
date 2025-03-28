@@ -6,27 +6,19 @@ import { D1Dialect } from "kysely-d1";
 
 export const auth = betterAuth({
   baseURL: "http://localhost:3000",
-    secret: env.COOKIE_SECRET,
-    advanced: {
-        cookies: {
-            session_token: {
-                name: "user.session",
-            },
-        }
-    },
-    database: {
-      db: new Kysely<DB>({
-        dialect: new D1Dialect({
-          database: env.DB,
-        }),
+  database: {
+    db: new Kysely<DB>({
+      dialect: new D1Dialect({
+        database: env.DB,
       }),
-      type: "sqlite",
+    }),
+    type: "sqlite",
+  },
+  emailAndPassword: {
+    enabled: true,
+    async sendResetPassword(data, request) {
+      // Send an email to the user with a link to reset their password
     },
-    emailAndPassword: {
-      enabled: true,
-      async sendResetPassword(data, request) {
-        // Send an email to the user with a link to reset their password
-      },
-    },
-    socialProviders: {},
-  });
+  },
+  socialProviders: {},
+});
