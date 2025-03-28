@@ -6,6 +6,7 @@ import { createMiddleware } from "hono/factory";
 import { type ServerBuild, createRequestHandler } from "react-router";
 
 import { adapterContext } from "./lib/adapter-context";
+import { sessionStorages } from "./lib/session.server";
 import { Tamagochi } from "./taimogochi";
 
 interface ReactRouterMiddlewareOptions {
@@ -47,7 +48,22 @@ const reactRouter = ({ build, mode }: ReactRouterMiddlewareOptions) => {
   });
 };
 
-app.use("/agents/*", agentsMiddleware());
+app.use("/agents/*", agentsMiddleware({
+  options: {
+    onBeforeConnect: async (req) => {
+      const session = await sessionStorages.user.getSession(req.headers.get("cookie"));
+      const user = session.get("user");
+      if (!user) {
+        return new Response("Unauthorized", { status: 401 });
+      }
+
+      const room = req.headers.get("x-partykit-room");
+      if (room?.toLowerCase() !== user.id.toLowerCase()) {
+        return new Response("Forbidden", { status: 403 });
+      }
+    },
+  }
+}));
 
 app.use(
   "/*",
