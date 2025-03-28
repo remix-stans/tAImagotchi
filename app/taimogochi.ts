@@ -35,7 +35,6 @@ export class Tamagochi extends AIChatAgent<Env, State> {
 
   async onRequest(request: Request) {
     const url = new URL(request.url);
-    console.log("onRequest", url);
 
     if (url.pathname.endsWith("/scheduled")) {
       return new Response(JSON.stringify(this.getScheduled()));

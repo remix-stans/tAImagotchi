@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Moon, Send, Sun } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useLoaderData } from "react-router";
 
 import type { State } from "../shared";
 import { INITIAL_STATE, getAge } from "../shared";
@@ -25,12 +26,14 @@ import toilet from "@/assets/toilet.webp";
 import workout from "@/assets/workout.webp";
 
 import { useScrollAnchor } from "@/lib/hooks/use-scroll-anchor";
+import { useAppLoaderData } from "./app";
 
 dayjs.extend(DayJSUtc);
 dayjs.extend(tz);
 
 export default function Chat() {
   const [state, setState] = useState<State>(INITIAL_STATE);
+  const appLoaderData = useAppLoaderData();
 
   const { containerRef, messagesRef, scrollToBottom } = useScrollAnchor();
 
@@ -41,9 +44,10 @@ export default function Chat() {
   }, [scrollToBottom, state.initialized]);
 
   const agent = useAgent({
-    agent: "tamagochi",
-    prefix: "agents",
     host: "http://localhost:3000",
+    prefix: "agents",
+    agent: "tamagochi",
+    name: appLoaderData.user.id.toLowerCase(),
     onStateUpdate(state, source) {
       setState(state as State);
     },
