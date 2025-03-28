@@ -1,7 +1,7 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-import { type Connection, unstable_callable as callable } from "agents";
+import { type Connection, type ConnectionContext, unstable_callable as callable } from "agents";
 import { AIChatAgent } from "agents/ai-chat-agent";
 import {
   type StreamTextOnFinishCallback,
@@ -15,6 +15,9 @@ import tz from "dayjs/plugin/timezone";
 import DayJSUtc from "dayjs/plugin/utc";
 import { z } from "zod";
 import { type ACTIONS, INITIAL_STATE, type State, getAge } from "./shared";
+import { auth } from "./lib/auth.server";
+import { sessionStorages } from "./lib/session.server";
+import type { User } from "./lib/session-middleware";
 
 dayjs.extend(DayJSUtc);
 dayjs.extend(tz);
@@ -33,9 +36,17 @@ export class Tamagochi extends AIChatAgent<Env, State> {
 
   initialState: State = INITIAL_STATE;
 
+  async onConnect(connection: Connection, ctx: ConnectionContext) {
+    const session = await sessionStorages.user.getSession(ctx.request.headers.get("Cookie"));
+    const user = session.get("user") as User | undefined;
+    if (!user || user.id.toLowerCase() !== connection.server.toLowerCase()) {
+      console.error("Agent connection closed due to unauthorized access", user?.id, connection.server);
+      connection.close(3000, "Unauthorized");
+    }
+  }
+
   async onRequest(request: Request) {
     const url = new URL(request.url);
-    console.log("onRequest", url);
 
     if (url.pathname.endsWith("/scheduled")) {
       return new Response(JSON.stringify(this.getScheduled()));

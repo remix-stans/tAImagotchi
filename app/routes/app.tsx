@@ -46,7 +46,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
   return (
     <div>
       <pre>{JSON.stringify(loaderData, null, 2)}</pre>
-      <UI />
+      <UI user={loaderData.user} />
     </div>
   );
 }

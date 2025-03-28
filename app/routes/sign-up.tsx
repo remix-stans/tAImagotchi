@@ -7,14 +7,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Root as FieldRoot, Label } from "@/components/ui/field";
-import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
-import { adapterContext } from "@/lib/adapter-context";
-import { getAuth } from "@/lib/auth.server";
+import { auth } from "@/lib/auth.server";
 import { getSession } from "@/lib/session-middleware";
 import { getFormProps, getInputProps, useForm } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod";
-import { useRef, useState } from "react";
 import { Form, Link, href, redirect, useNavigation } from "react-router";
 import { z } from "zod";
 import type { Route } from "./+types/sign-up";
@@ -39,7 +36,7 @@ export async function action({ context, request }: Route.ActionArgs) {
 
   if (submission.status === "success") {
     try {
-      const result = await getAuth().api.signUpEmail({
+      const result = await auth.api.signUpEmail({
         body: {
           name: submission.value.name,
           email: submission.value.email,

@@ -1,20 +1,25 @@
 import { env } from "cloudflare:workers";
 import { betterAuth } from "better-auth";
-import { passkey } from "better-auth/plugins/passkey";
 import { Kysely } from "kysely";
 import type { DB } from "kysely-codegen";
 import { D1Dialect } from "kysely-d1";
 
-export function getAuth() {
-  const db = new Kysely<DB>({
-    dialect: new D1Dialect({
-      database: env.DB,
-    }),
-  });
-
-  return betterAuth({
+export const auth = betterAuth({
+  baseURL: "http://localhost:3000",
+    secret: env.COOKIE_SECRET,
+    advanced: {
+        cookies: {
+            session_token: {
+                name: "user.session",
+            },
+        }
+    },
     database: {
-      db,
+      db: new Kysely<DB>({
+        dialect: new D1Dialect({
+          database: env.DB,
+        }),
+      }),
       type: "sqlite",
     },
     emailAndPassword: {
@@ -25,4 +30,3 @@ export function getAuth() {
     },
     socialProviders: {},
   });
-}

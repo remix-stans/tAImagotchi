@@ -8,14 +8,13 @@ import {
 } from "@/components/ui/card";
 import { Root as FieldRoot, Label } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { adapterContext } from "@/lib/adapter-context";
-import { getAuth } from "@/lib/auth.server";
 import { getSession } from "@/lib/session-middleware";
 import { getFormProps, getInputProps, useForm } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod";
 import { Form, Link, href, redirect, useNavigation } from "react-router";
 import z from "zod";
 import type { Route } from "./+types/sign-in";
+import { auth } from "@/lib/auth.server";
 
 const schema = z.object({
   email: z.string().email({ message: "Please use a valid email address." }),
@@ -29,7 +28,7 @@ export async function action({ context, request }: Route.ActionArgs) {
 
   if (submission.status === "success") {
     try {
-      const result = await getAuth().api.signInEmail({
+      const result = await auth.api.signInEmail({
         body: submission.value,
         asResponse: false,
       });

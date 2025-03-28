@@ -25,11 +25,16 @@ import toilet from "@/assets/toilet.webp";
 import workout from "@/assets/workout.webp";
 
 import { useScrollAnchor } from "@/lib/hooks/use-scroll-anchor";
+import type { User } from "@/lib/session-middleware";
 
 dayjs.extend(DayJSUtc);
 dayjs.extend(tz);
 
-export default function Chat() {
+type Props = {
+  user: User;
+}
+
+export default function Chat({ user }: Props) {
   const [state, setState] = useState<State>(INITIAL_STATE);
 
   const { containerRef, messagesRef, scrollToBottom } = useScrollAnchor();
@@ -41,9 +46,10 @@ export default function Chat() {
   }, [scrollToBottom, state.initialized]);
 
   const agent = useAgent({
-    agent: "tamagochi",
-    prefix: "agents",
     host: "http://localhost:3000",
+    prefix: "agents",
+    agent: "tamagochi",
+    name: user.id.toLowerCase(),
     onStateUpdate(state, source) {
       setState(state as State);
     },
