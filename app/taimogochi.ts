@@ -1,4 +1,3 @@
-import { AsyncLocalStorage } from "node:async_hooks";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { type Connection, unstable_callable as callable } from "agents";
@@ -18,9 +17,6 @@ import { type ACTIONS, INITIAL_STATE, type State, getAge } from "./shared";
 
 dayjs.extend(DayJSUtc);
 dayjs.extend(tz);
-
-// we use ALS to expose the agent context to the tools
-export const agentContext = new AsyncLocalStorage<Tamagochi>();
 
 export class Tamagochi extends AIChatAgent<Env, State> {
   gemini = createGoogleGenerativeAI({
@@ -234,27 +230,25 @@ export class Tamagochi extends AIChatAgent<Env, State> {
   async onChatMessage(
     onFinish: StreamTextOnFinishCallback<Record<string, never>>,
   ) {
-    return agentContext.run(this, async () => {
-      const dataStreamResponse = createDataStreamResponse({
-        execute: async (dataStream) => {
-          const result = streamText({
-            model: this.gemini("gemini-2.0-flash"),
-            system: this.generatePrompt(),
-            messages: this.messages,
-            onError: (error) => {
-              console.error("Error while streaming:", error);
-            },
-            onFinish,
-            maxSteps: 1,
-            maxTokens: 100,
-          });
+    const dataStreamResponse = createDataStreamResponse({
+      execute: async (dataStream) => {
+        const result = streamText({
+          model: this.gemini("gemini-2.0-flash"),
+          system: this.generatePrompt(),
+          messages: this.messages,
+          onError: (error) => {
+            console.error("Error while streaming:", error);
+          },
+          onFinish,
+          maxSteps: 1,
+          maxTokens: 100,
+        });
 
-          result.mergeIntoDataStream(dataStream);
-        },
-      });
-
-      return dataStreamResponse;
+        result.mergeIntoDataStream(dataStream);
+      },
     });
+
+    return dataStreamResponse;
   }
 
   onStateUpdate(state: State | undefined, source: Connection | "server"): void {

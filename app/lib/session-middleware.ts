@@ -1,5 +1,6 @@
 import {
   type Session,
+  redirect,
   type unstable_MiddlewareFunction,
   type unstable_RouterContextProvider,
   unstable_createContext,
@@ -54,3 +55,16 @@ export function getSession(
 ) {
   return context.get(sessionContext)[key];
 }
+
+export const loginMiddleware: unstable_MiddlewareFunction<Response> = async (
+  { context },
+  next,
+) => {
+  const user = getSession(context, "user").get("user");
+
+  if (user) {
+    throw redirect("/");
+  }
+
+  return next();
+};

@@ -9,7 +9,7 @@ import {
 import { Root as FieldRoot, Label } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { auth } from "@/lib/auth.server";
-import { getSession } from "@/lib/session-middleware";
+import { getSession, loginMiddleware } from "@/lib/session-middleware";
 import { getFormProps, getInputProps, useForm } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod";
 import { Form, Link, href, redirect, useNavigation } from "react-router";
@@ -22,12 +22,13 @@ const schema = z
     email: z.string().email(),
     password: z.string(),
     passwordConfirmation: z.string(),
-    image: z.union([z.instanceof(File), z.string()]).optional(),
   })
   .refine((data) => data.password === data.passwordConfirmation, {
     message: "Passwords don't match",
     path: ["passwordConfirmation"],
   });
+
+export const unstable_middleware = [loginMiddleware];
 
 export async function action({ context, request }: Route.ActionArgs) {
   const formData = await request.formData();
@@ -41,7 +42,6 @@ export async function action({ context, request }: Route.ActionArgs) {
           name: submission.value.name,
           email: submission.value.email,
           password: submission.value.password,
-          image: `/images/${submission.value.image}`,
         },
         asResponse: false,
       });
