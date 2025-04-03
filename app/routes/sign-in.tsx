@@ -1,3 +1,8 @@
+import { getFormProps, getInputProps, useForm } from "@conform-to/react";
+import { parseWithZod } from "@conform-to/zod";
+import { Form, Link, href, redirect, useNavigation } from "react-router";
+import z from "zod";
+
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -8,12 +13,9 @@ import {
 } from "@/components/ui/card";
 import { Root as FieldRoot, Label } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { authClient } from "@/lib/auth";
 import { auth } from "@/lib/auth.server";
-import { getSession, loginMiddleware } from "@/lib/session-middleware";
-import { getFormProps, getInputProps, useForm } from "@conform-to/react";
-import { parseWithZod } from "@conform-to/zod";
-import { Form, Link, href, redirect, useNavigation } from "react-router";
-import z from "zod";
+import { loginMiddleware } from "@/lib/middlewares/login";
 import type { Route } from "./+types/sign-in";
 
 const schema = z.object({
@@ -27,25 +29,31 @@ export const unstable_middleware = [loginMiddleware];
 export async function action({ context, request }: Route.ActionArgs) {
   const formData = await request.formData();
   const submission = parseWithZod(formData, { schema });
-
-  if (submission.status === "success") {
-    try {
-      const result = await auth.api.signInEmail({
-        body: submission.value,
-        asResponse: false,
-      });
-      const session = getSession(context, "user");
-      session.set("user", result.user);
-    } catch (error) {
-      if (error instanceof Error) {
-        return submission.reply({ formErrors: [error.message] });
-      }
-      return submission.reply({ formErrors: ["Error signing in."] });
-    }
-    throw redirect("/");
+  if (submission.status !== "success") {
+    return submission.reply();
   }
 
-  return submission.reply();
+  let token: string | undefined;
+  try {
+    const session = await auth.api.signInEmail({
+      body: submission.value,
+      asResponse: false,
+    });
+    token = session.token;
+  } catch (err) {
+    console.log(err);
+    return submission.reply({
+      formErrors: err instanceof Error ? [err.message] : ["Error signing in."],
+    });
+  }
+
+  if (token) {
+    throw redirect("/app", {
+      headers: {
+        "Set-Cookie": `${auth.options.cookies.session_token.name}=${token}`,
+      },
+    });
+  }
 }
 
 export default function SignIn({ actionData }: Route.ComponentProps) {
@@ -64,7 +72,7 @@ export default function SignIn({ actionData }: Route.ComponentProps) {
 
   const loading = navigation.state !== "idle";
   return (
-    <Card className="mt-24 w-md max-w-full self-center lg:mt-48">
+    <Card className="mx-auto mt-24 w-md max-w-full self-center lg:mt-48">
       <CardHeader>
         <CardTitle className="text-lg md:text-xl">Sign In</CardTitle>
         <CardDescription className="text-xs md:text-sm">
@@ -96,7 +104,7 @@ export default function SignIn({ actionData }: Route.ComponentProps) {
             <p className="text-red-500">{fields.password.errors}</p>
           </FieldRoot>
 
-          <FieldRoot className="flex items-center gap-2">
+          <FieldRoot className="flex flex-row items-center gap-2">
             <input {...getInputProps(fields.remember, { type: "checkbox" })} />
             <Label>Remember me</Label>
             {/* <Link href="#" className="ml-auto inline-block text-sm underline">
@@ -115,19 +123,19 @@ export default function SignIn({ actionData }: Route.ComponentProps) {
 						) : (
 							"Login"
 						)} */}
-            Login
+            Log In
           </Button>
 
-          {/* <Button
+          <Button
             variant="secondary"
             className="gap-2"
-            onPress={async () => {
-              await authClient.signIn.passkey();
+            onClick={async (e) => {
+              e.preventDefault();
+              await authClient.signIn.social({ provider: "google" });
             }}
           >
-            <Icon name="Key" className="size-4" />
-            Sign-in with Passkey
-          </Button> */}
+            Log In with Google
+          </Button>
         </Form>
         <p className="mt-4 text-sm">
           New here?{" "}

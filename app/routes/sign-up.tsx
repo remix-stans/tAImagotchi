@@ -1,3 +1,8 @@
+import { getFormProps, getInputProps, useForm } from "@conform-to/react";
+import { parseWithZod } from "@conform-to/zod";
+import { Form, Link, href, redirect, useNavigation } from "react-router";
+import { z } from "zod";
+
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -9,11 +14,7 @@ import {
 import { Root as FieldRoot, Label } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { auth } from "@/lib/auth.server";
-import { getSession, loginMiddleware } from "@/lib/session-middleware";
-import { getFormProps, getInputProps, useForm } from "@conform-to/react";
-import { parseWithZod } from "@conform-to/zod";
-import { Form, Link, href, redirect, useNavigation } from "react-router";
-import { z } from "zod";
+import { loginMiddleware } from "@/lib/middlewares/login";
 import type { Route } from "./+types/sign-up";
 
 const schema = z
@@ -30,14 +31,14 @@ const schema = z
 
 export const unstable_middleware = [loginMiddleware];
 
-export async function action({ context, request }: Route.ActionArgs) {
+export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData();
 
   const submission = parseWithZod(formData, { schema });
 
   if (submission.status === "success") {
     try {
-      const result = await auth.api.signUpEmail({
+      await auth.api.signUpEmail({
         body: {
           name: submission.value.name,
           email: submission.value.email,
@@ -45,15 +46,13 @@ export async function action({ context, request }: Route.ActionArgs) {
         },
         asResponse: false,
       });
-      const session = getSession(context, "user");
-      session.set("user", result.user);
     } catch (error) {
       if (error instanceof Error) {
         return submission.reply({ formErrors: [error.message] });
       }
       return submission.reply({ formErrors: ["Error signing up."] });
     }
-    throw redirect("/");
+    throw redirect("/app");
   }
   return submission.reply();
 }
@@ -75,7 +74,7 @@ export default function SignUp({ actionData }: Route.ComponentProps) {
   });
 
   return (
-    <Card className="z-50 mt-16 w-md max-w-full self-center rounded-md rounded-t-none lg:mt-24">
+    <Card className="z-50 mx-auto mt-16 w-md max-w-full self-center rounded-md rounded-t-none lg:mt-24">
       <CardHeader>
         <CardTitle className="text-lg md:text-xl">Sign Up</CardTitle>
         <CardDescription className="text-xs md:text-sm">
