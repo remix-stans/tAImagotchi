@@ -6,11 +6,6 @@ import { D1Dialect } from "kysely-d1";
 
 export const auth = betterAuth({
   secret: env.BETTER_AUTH_SECRET,
-  cookies: {
-    session_token: {
-      name: "user.session",
-    },
-  },
   database: {
     db: new Kysely<DB>({
       dialect: new D1Dialect({

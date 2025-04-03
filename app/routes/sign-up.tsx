@@ -1,6 +1,6 @@
 import { getFormProps, getInputProps, useForm } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod";
-import { Form, Link, href, redirect, useNavigation } from "react-router";
+import { Form, Link, href, useNavigation } from "react-router";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/card";
 import { Root as FieldRoot, Label } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { auth } from "@/lib/auth.server";
+import { authClient } from "@/lib/auth";
 import { loginMiddleware } from "@/lib/middlewares/login";
 import type { Route } from "./+types/sign-up";
 
@@ -31,32 +31,6 @@ const schema = z
 
 export const unstable_middleware = [loginMiddleware];
 
-export async function action({ request }: Route.ActionArgs) {
-  const formData = await request.formData();
-
-  const submission = parseWithZod(formData, { schema });
-
-  if (submission.status === "success") {
-    try {
-      await auth.api.signUpEmail({
-        body: {
-          name: submission.value.name,
-          email: submission.value.email,
-          password: submission.value.password,
-        },
-        asResponse: false,
-      });
-    } catch (error) {
-      if (error instanceof Error) {
-        return submission.reply({ formErrors: [error.message] });
-      }
-      return submission.reply({ formErrors: ["Error signing up."] });
-    }
-    throw redirect("/app");
-  }
-  return submission.reply();
-}
-
 export default function SignUp({ actionData }: Route.ComponentProps) {
   const navigation = useNavigation();
   const loading = navigation.state !== "idle";
@@ -70,6 +44,26 @@ export default function SignUp({ actionData }: Route.ComponentProps) {
     shouldRevalidate: "onInput",
     onValidate({ formData }) {
       return parseWithZod(formData, { schema });
+    },
+    async onSubmit(e, { submission }) {
+      e.preventDefault();
+
+      if (submission?.status === "success") {
+        try {
+          const response = await authClient.signUp.email(submission.value);
+          if (response.error) {
+            throw new Error(response.error.message);
+          }
+
+          window.location.href = "/app";
+        } catch (err) {
+          console.error("Error signing up", err);
+          return submission.reply({
+            formErrors:
+              err instanceof Error ? [err.message] : ["Error signing up."],
+          });
+        }
+      }
     },
   });
 

@@ -1,6 +1,6 @@
 import { getFormProps, getInputProps, useForm } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod";
-import { Form, Link, href, redirect, useNavigation } from "react-router";
+import { Form, Link, href, useNavigation } from "react-router";
 import z from "zod";
 
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,6 @@ import {
 import { Root as FieldRoot, Label } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth";
-import { auth } from "@/lib/auth.server";
 import { loginMiddleware } from "@/lib/middlewares/login";
 import type { Route } from "./+types/sign-in";
 
@@ -25,36 +24,6 @@ const schema = z.object({
 });
 
 export const unstable_middleware = [loginMiddleware];
-
-export async function action({ context, request }: Route.ActionArgs) {
-  const formData = await request.formData();
-  const submission = parseWithZod(formData, { schema });
-  if (submission.status !== "success") {
-    return submission.reply();
-  }
-
-  let token: string | undefined;
-  try {
-    const session = await auth.api.signInEmail({
-      body: submission.value,
-      asResponse: false,
-    });
-    token = session.token;
-  } catch (err) {
-    console.log(err);
-    return submission.reply({
-      formErrors: err instanceof Error ? [err.message] : ["Error signing in."],
-    });
-  }
-
-  if (token) {
-    throw redirect("/app", {
-      headers: {
-        "Set-Cookie": `${auth.options.cookies.session_token.name}=${token}`,
-      },
-    });
-  }
-}
 
 export default function SignIn({ actionData }: Route.ComponentProps) {
   const navigation = useNavigation();
@@ -67,6 +36,26 @@ export default function SignIn({ actionData }: Route.ComponentProps) {
     shouldRevalidate: "onInput",
     onValidate({ formData }) {
       return parseWithZod(formData, { schema });
+    },
+    async onSubmit(e, { submission }) {
+      e.preventDefault();
+
+      if (submission?.status === "success") {
+        try {
+          const response = await authClient.signIn.email(submission.value);
+          if (response.error) {
+            throw new Error(response.error.message);
+          }
+
+          window.location.href = "/app";
+        } catch (err) {
+          console.error("Error signing in", err);
+          return submission.reply({
+            formErrors:
+              err instanceof Error ? [err.message] : ["Error signing in."],
+          });
+        }
+      }
     },
   });
 
