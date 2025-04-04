@@ -1,6 +1,6 @@
 import { getFormProps, getInputProps, useForm } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod";
-import { Form, Link, href, useNavigation } from "react-router";
+import { Form, Link, href, useNavigate, useNavigation } from "react-router";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
@@ -33,6 +33,7 @@ export const unstable_middleware = [loginMiddleware];
 
 export default function SignUp({ actionData }: Route.ComponentProps) {
   const navigation = useNavigation();
+  const navigate = useNavigate();
   const loading = navigation.state !== "idle";
 
   const [form, fields] = useForm({
@@ -55,7 +56,7 @@ export default function SignUp({ actionData }: Route.ComponentProps) {
             throw new Error(response.error.message);
           }
 
-          window.location.href = "/app";
+          navigate("/app");
         } catch (err) {
           console.error("Error signing up", err);
           return submission.reply({
