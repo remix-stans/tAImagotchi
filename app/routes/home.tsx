@@ -1,10 +1,9 @@
-import { getSession } from "@/lib/session-middleware";
+import { sessionContext } from "@/lib/middlewares/session";
 import { Link } from "react-router";
 import type { Route } from "./+types/home";
 
 export async function loader({ context }: Route.LoaderArgs) {
-  const user = getSession(context, "user").get("user");
-
+  const { user } = context.get(sessionContext);
   return { user };
 }
 
@@ -38,7 +37,7 @@ export default function LandingPage({ loaderData }: Route.ComponentProps) {
               interactions.
             </p>
             <Link
-              to="/create"
+              to="/app"
               className="inline-block rounded-full bg-white px-8 py-3 font-semibold text-purple-600 transition hover:bg-purple-100"
             >
               Create Your tAImagotchi

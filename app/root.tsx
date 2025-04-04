@@ -9,7 +9,7 @@ import {
 
 import type { Route } from "./+types/root";
 import "./app.css";
-import { sessionMiddleware } from "./lib/session-middleware";
+import { sessionMiddleware } from "./lib/middlewares/session";
 
 export const unstable_middleware = [sessionMiddleware];
 
