@@ -1,3 +1,8 @@
+import { getFormProps, getInputProps, useForm } from "@conform-to/react";
+import { parseWithZod } from "@conform-to/zod";
+import { Form, Link, href, useNavigate, useNavigation } from "react-router";
+import z from "zod";
+
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -8,13 +13,9 @@ import {
 } from "@/components/ui/card";
 import { Root as FieldRoot, Label } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { getSession } from "@/lib/session-middleware";
-import { getFormProps, getInputProps, useForm } from "@conform-to/react";
-import { parseWithZod } from "@conform-to/zod";
-import { Form, Link, href, redirect, useNavigation } from "react-router";
-import z from "zod";
+import { authClient } from "@/lib/auth";
+import { loginMiddleware } from "@/lib/middlewares/login";
 import type { Route } from "./+types/sign-in";
-import { auth } from "@/lib/auth.server";
 
 const schema = z.object({
   email: z.string().email({ message: "Please use a valid email address." }),
@@ -22,32 +23,11 @@ const schema = z.object({
   remember: z.boolean().optional(),
 });
 
-export async function action({ context, request }: Route.ActionArgs) {
-  const formData = await request.formData();
-  const submission = parseWithZod(formData, { schema });
-
-  if (submission.status === "success") {
-    try {
-      const result = await auth.api.signInEmail({
-        body: submission.value,
-        asResponse: false,
-      });
-      const session = getSession(context, "user");
-      session.set("user", result.user);
-    } catch (error) {
-      if (error instanceof Error) {
-        return submission.reply({ formErrors: [error.message] });
-      }
-      return submission.reply({ formErrors: ["Error signing in."] });
-    }
-    throw redirect("/");
-  }
-
-  return submission.reply();
-}
+export const unstable_middleware = [loginMiddleware];
 
 export default function SignIn({ actionData }: Route.ComponentProps) {
   const navigation = useNavigation();
+  const navigate = useNavigate();
   const [form, fields] = useForm({
     // Sync the result of last submission
     lastResult: navigation.state === "idle" ? actionData : null,
@@ -58,11 +38,30 @@ export default function SignIn({ actionData }: Route.ComponentProps) {
     onValidate({ formData }) {
       return parseWithZod(formData, { schema });
     },
+    async onSubmit(e, { submission }) {
+      e.preventDefault();
+
+      if (submission?.status === "success") {
+        try {
+          const response = await authClient.signIn.email(submission.value);
+          if (response.error) {
+            throw new Error(response.error.message);
+          }
+          navigate("/app");
+        } catch (err) {
+          console.error("Error signing in", err);
+          return submission.reply({
+            formErrors:
+              err instanceof Error ? [err.message] : ["Error signing in."],
+          });
+        }
+      }
+    },
   });
 
   const loading = navigation.state !== "idle";
   return (
-    <Card className="mt-24 w-md max-w-full self-center lg:mt-48">
+    <Card className="mx-auto mt-24 w-md max-w-full self-center lg:mt-48">
       <CardHeader>
         <CardTitle className="text-lg md:text-xl">Sign In</CardTitle>
         <CardDescription className="text-xs md:text-sm">
@@ -94,7 +93,7 @@ export default function SignIn({ actionData }: Route.ComponentProps) {
             <p className="text-red-500">{fields.password.errors}</p>
           </FieldRoot>
 
-          <FieldRoot className="flex items-center gap-2">
+          <FieldRoot className="flex flex-row items-center gap-2">
             <input {...getInputProps(fields.remember, { type: "checkbox" })} />
             <Label>Remember me</Label>
             {/* <Link href="#" className="ml-auto inline-block text-sm underline">
@@ -113,19 +112,19 @@ export default function SignIn({ actionData }: Route.ComponentProps) {
 						) : (
 							"Login"
 						)} */}
-            Login
+            Log In
           </Button>
 
-          {/* <Button
+          <Button
             variant="secondary"
             className="gap-2"
-            onPress={async () => {
-              await authClient.signIn.passkey();
+            onClick={async (e) => {
+              e.preventDefault();
+              await authClient.signIn.social({ provider: "google" });
             }}
           >
-            <Icon name="Key" className="size-4" />
-            Sign-in with Passkey
-          </Button> */}
+            Log In with Google
+          </Button>
         </Form>
         <p className="mt-4 text-sm">
           New here?{" "}

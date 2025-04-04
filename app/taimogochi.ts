@@ -1,4 +1,3 @@
-import { AsyncLocalStorage } from "node:async_hooks";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { type Connection, unstable_callable as callable } from "agents";
@@ -18,9 +17,6 @@ import { type ACTIONS, INITIAL_STATE, type State } from "./shared";
 
 dayjs.extend(DayJSUtc);
 dayjs.extend(tz);
-
-// we use ALS to expose the agent context to the tools
-export const agentContext = new AsyncLocalStorage<Tamagochi>();
 
 export class Tamagochi extends AIChatAgent<Env, State> {
   gemini = createGoogleGenerativeAI({
@@ -228,31 +224,29 @@ export class Tamagochi extends AIChatAgent<Env, State> {
   async onChatMessage(
     onFinish: StreamTextOnFinishCallback<Record<string, never>>,
   ) {
-    return agentContext.run(this, async () => {
-      if (this.state.age === 0) {
-        return new Response("0:\"...\"\n"); // replies with "..."
-      }
+    if (this.state.age === 0) {
+      return new Response('0:"..."\n'); // replies with "..."
+    }
 
-      const dataStreamResponse = createDataStreamResponse({
-        execute: async (dataStream) => {
-          const result = streamText({
-            model: this.gemini("gemini-2.0-flash"),
-            system: this.generateSystemPrompt(),
-            messages: this.messages,
-            onError: (error) => {
-              console.error("Error while streaming:", error);
-            },
-            onFinish,
-            maxSteps: 1,
-            maxTokens: 100,
-          });
+    const dataStreamResponse = createDataStreamResponse({
+      execute: async (dataStream) => {
+        const result = streamText({
+          model: this.gemini("gemini-2.0-flash"),
+          system: this.generateSystemPrompt(),
+          messages: this.messages,
+          onError: (error) => {
+            console.error("Error while streaming:", error);
+          },
+          onFinish,
+          maxSteps: 1,
+          maxTokens: 100,
+        });
 
-          result.mergeIntoDataStream(dataStream);
-        },
-      });
-
-      return dataStreamResponse;
+        result.mergeIntoDataStream(dataStream);
+      },
     });
+
+    return dataStreamResponse;
   }
 
   onStateUpdate(state: State | undefined, source: Connection | "server"): void {
@@ -260,7 +254,9 @@ export class Tamagochi extends AIChatAgent<Env, State> {
   }
 
   async adjustStats() {
-    const age = Math.floor((Date.now() - this.state.createdAt) / (1000 * 60 * 60 * 24));
+    const age = Math.floor(
+      (Date.now() - this.state.createdAt) / (1000 * 60 * 60 * 24),
+    );
 
     // if the pet is less than 1 day old, don't adjust stats
     if (age === 0) return;
@@ -280,7 +276,8 @@ export class Tamagochi extends AIChatAgent<Env, State> {
 
   takePoop() {
     // if the pet is less than 1 day old, dead, or sleeping, then don't poop
-    if (this.state.age === 0 || this.state.isSleeping || !this.state.isAlive) return;
+    if (this.state.age === 0 || this.state.isSleeping || !this.state.isAlive)
+      return;
 
     // Don't poop if we aren't that full
     if (this.state.satiety < 50) return;

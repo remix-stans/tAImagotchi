@@ -1,3 +1,8 @@
+import { getFormProps, getInputProps, useForm } from "@conform-to/react";
+import { parseWithZod } from "@conform-to/zod";
+import { Form, Link, href, useNavigate, useNavigation } from "react-router";
+import { z } from "zod";
+
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -8,12 +13,8 @@ import {
 } from "@/components/ui/card";
 import { Root as FieldRoot, Label } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { auth } from "@/lib/auth.server";
-import { getSession } from "@/lib/session-middleware";
-import { getFormProps, getInputProps, useForm } from "@conform-to/react";
-import { parseWithZod } from "@conform-to/zod";
-import { Form, Link, href, redirect, useNavigation } from "react-router";
-import { z } from "zod";
+import { authClient } from "@/lib/auth";
+import { loginMiddleware } from "@/lib/middlewares/login";
 import type { Route } from "./+types/sign-up";
 
 const schema = z
@@ -22,44 +23,17 @@ const schema = z
     email: z.string().email(),
     password: z.string(),
     passwordConfirmation: z.string(),
-    image: z.union([z.instanceof(File), z.string()]).optional(),
   })
   .refine((data) => data.password === data.passwordConfirmation, {
     message: "Passwords don't match",
     path: ["passwordConfirmation"],
   });
 
-export async function action({ context, request }: Route.ActionArgs) {
-  const formData = await request.formData();
-
-  const submission = parseWithZod(formData, { schema });
-
-  if (submission.status === "success") {
-    try {
-      const result = await auth.api.signUpEmail({
-        body: {
-          name: submission.value.name,
-          email: submission.value.email,
-          password: submission.value.password,
-          image: `/images/${submission.value.image}`,
-        },
-        asResponse: false,
-      });
-      const session = getSession(context, "user");
-      session.set("user", result.user);
-    } catch (error) {
-      if (error instanceof Error) {
-        return submission.reply({ formErrors: [error.message] });
-      }
-      return submission.reply({ formErrors: ["Error signing up."] });
-    }
-    throw redirect("/");
-  }
-  return submission.reply();
-}
+export const unstable_middleware = [loginMiddleware];
 
 export default function SignUp({ actionData }: Route.ComponentProps) {
   const navigation = useNavigation();
+  const navigate = useNavigate();
   const loading = navigation.state !== "idle";
 
   const [form, fields] = useForm({
@@ -72,10 +46,30 @@ export default function SignUp({ actionData }: Route.ComponentProps) {
     onValidate({ formData }) {
       return parseWithZod(formData, { schema });
     },
+    async onSubmit(e, { submission }) {
+      e.preventDefault();
+
+      if (submission?.status === "success") {
+        try {
+          const response = await authClient.signUp.email(submission.value);
+          if (response.error) {
+            throw new Error(response.error.message);
+          }
+
+          navigate("/app");
+        } catch (err) {
+          console.error("Error signing up", err);
+          return submission.reply({
+            formErrors:
+              err instanceof Error ? [err.message] : ["Error signing up."],
+          });
+        }
+      }
+    },
   });
 
   return (
-    <Card className="z-50 mt-16 w-md max-w-full self-center rounded-md rounded-t-none lg:mt-24">
+    <Card className="z-50 mx-auto mt-16 w-md max-w-full self-center rounded-md rounded-t-none lg:mt-24">
       <CardHeader>
         <CardTitle className="text-lg md:text-xl">Sign Up</CardTitle>
         <CardDescription className="text-xs md:text-sm">

@@ -5,7 +5,7 @@ import type { DB } from "kysely-codegen";
 import { D1Dialect } from "kysely-d1";
 
 export const auth = betterAuth({
-  baseURL: "http://localhost:3000",
+  secret: env.BETTER_AUTH_SECRET,
   database: {
     db: new Kysely<DB>({
       dialect: new D1Dialect({
@@ -20,5 +20,10 @@ export const auth = betterAuth({
       // Send an email to the user with a link to reset their password
     },
   },
-  socialProviders: {},
+  socialProviders: {
+    google: {
+      clientId: env.GOOGLE_CLIENT_ID,
+      clientSecret: env.GOOGLE_CLIENT_SECRET,
+    },
+  },
 });
